@@ -1,0 +1,141 @@
+@import 'tailwindcss';
+
+:root {
+    font-family: Inter, system-ui, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color: #0f172a;
+    background: #f8fafc;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html.dark {
+    color: #e2e8f0;
+    background: #0f172a;
+}
+
+:focus-visible {
+    outline: none;
+}
+
+button,
+input,
+select,
+textarea {
+    transition: all 0.2s ease;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    margin: 0;
+    min-width: 100%;
+    min-height: 100vh;
+    background: #f8fafc;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html.dark,
+html.dark body,
+html.dark #root {
+    background: #0f172a;
+}
+
+body {
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+html.dark body {
+    background: #0f172a;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+.input {
+    width: 100%;
+    border-radius: 0.9rem;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    padding: 0.7rem 0.9rem;
+    color: #0f172a;
+}
+
+html.dark .input {
+    border-color: #475569;
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+.btn-primary,
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.9rem;
+    padding: 0.7rem 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #0ea5e9;
+    color: white;
+    box-shadow: 0 10px 25px -12px rgba(14, 165, 233, 0.7);
+}
+
+.btn-primary:hover {
+    background: #0284c7;
+}
+
+.btn-secondary {
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: #0f172a;
+}
+
+html.dark .btn-secondary {
+    background: #0f172a;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #e2e8f0;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 9999px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
