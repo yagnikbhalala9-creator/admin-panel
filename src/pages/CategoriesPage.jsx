@@ -28,6 +28,7 @@ const CategoriesPage = () => {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
     const [form, setForm] = useState(emptyForm);
+    const [editingId, setEditingId] = useState(null);
 
     const fetchCategories = async () => {
         const token = localStorage.getItem('adminToken');
@@ -35,6 +36,12 @@ const CategoriesPage = () => {
             headers: { Authorization: `Bearer ${token}` },
         });
         setCategories(res.data.data || []);
+    };
+
+    const resetForm = () => {
+        setForm(emptyForm);
+        setEditingId(null);
+        setShowForm(false);
     };
 
     useEffect(() => {
@@ -58,21 +65,59 @@ const CategoriesPage = () => {
 
         try {
             const token = localStorage.getItem('adminToken');
-            const response = await axios.post(`${API_URL}/api/admin/categories`, form, {
+            const endpoint = editingId
+                ? `${API_URL}/api/admin/categories/${editingId}`
+                : `${API_URL}/api/admin/categories`;
+            const method = editingId ? 'patch' : 'post';
+            const response = await axios({
+                method,
+                url: endpoint,
+                data: form,
                 headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.data.success) {
-                setMessage('Category added successfully');
-                setForm(emptyForm);
-                setShowForm(false);
+                setMessage(editingId ? 'Category updated successfully' : 'Category added successfully');
+                resetForm();
                 await fetchCategories();
             }
         } catch (error) {
-            console.error('Create category failed:', error);
-            setMessage(error.response?.data?.message || 'Failed to add category');
+            console.error('Save category failed:', error);
+            setMessage(error.response?.data?.message || 'Failed to save category');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleEditCategory = (category) => {
+        setEditingId(category._id);
+        setForm({
+            name: category.name || '',
+            description: category.description || '',
+            image: category.image || '',
+            displayOrder: category.displayOrder ?? 0,
+            isActive: typeof category.isActive === 'boolean' ? category.isActive : true,
+        });
+        setShowForm(true);
+    };
+
+    const handleDeleteCategory = async (categoryId) => {
+        const confirmed = window.confirm('આ category delete કરવું છે?');
+        if (!confirmed) return;
+
+        try {
+            const token = localStorage.getItem('adminToken');
+            const response = await axios.delete(`${API_URL}/api/admin/categories/${categoryId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.data.success) {
+                setMessage('Category deleted successfully');
+                await fetchCategories();
+            }
+        } catch (error) {
+            console.error('Delete category failed:', error);
+            setMessage(error.response?.data?.message || 'Failed to delete category');
         }
     };
 
@@ -84,7 +129,13 @@ const CategoriesPage = () => {
                     <p className="text-sm text-slate-500 dark:text-slate-400">Manage product categories and display order</p>
                 </div>
                 <button
-                    onClick={() => setShowForm((prev) => !prev)}
+                    onClick={() => {
+                        if (showForm) {
+                            resetForm();
+                            return;
+                        }
+                        setShowForm(true);
+                    }}
                     className="rounded-xl bg-brand-500 px-4 py-2 font-medium text-white shadow-soft hover:bg-brand-600"
                 >
                     {showForm ? 'Close' : '+ Add Category'}
@@ -96,48 +147,20 @@ const CategoriesPage = () => {
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
                             <label className="mb-1 block text-sm text-slate-600 dark:text-slate-300">Category Name</label>
-                            <input
-                                name="name"
-                                value={form.name}
-                                onChange={handleChange}
-                                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-500/20"
-                                required
-                            />
+                            <input name="name" value={form.name} onChange={handleChange} className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-500/20" required />
                         </div>
-
                         <div>
                             <label className="mb-1 block text-sm text-slate-600 dark:text-slate-300">Display Order</label>
-                            <input
-                                type="number"
-                                name="displayOrder"
-                                value={form.displayOrder}
-                                onChange={handleChange}
-                                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-500/20"
-                            />
+                            <input type="number" name="displayOrder" value={form.displayOrder} onChange={handleChange} className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-500/20" />
                         </div>
-
                         <div className="md:col-span-2">
                             <label className="mb-1 block text-sm text-slate-600 dark:text-slate-300">Description</label>
-                            <textarea
-                                name="description"
-                                value={form.description}
-                                onChange={handleChange}
-                                rows="3"
-                                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-500/20"
-                            />
+                            <textarea name="description" value={form.description} onChange={handleChange} rows="3" className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-500/20" />
                         </div>
-
                         <div className="md:col-span-2">
                             <label className="mb-1 block text-sm text-slate-600 dark:text-slate-300">Image URL</label>
-                            <input
-                                name="image"
-                                value={form.image}
-                                onChange={handleChange}
-                                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-500/20"
-                                placeholder="https://example.com/category.jpg"
-                            />
+                            <input name="image" value={form.image} onChange={handleChange} className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-500/20" placeholder="https://example.com/category.jpg" />
                         </div>
-
                         <div className="flex items-center gap-2 text-sm md:col-span-2">
                             <input id="categoryActive" type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} />
                             <label htmlFor="categoryActive">Active</label>
@@ -148,9 +171,9 @@ const CategoriesPage = () => {
 
                     <div className="mt-4 flex gap-3">
                         <button type="submit" disabled={saving} className="rounded-xl bg-brand-500 px-4 py-2 font-medium text-white hover:bg-brand-600 disabled:opacity-60">
-                            {saving ? 'Saving...' : 'Save Category'}
+                            {saving ? 'Saving...' : editingId ? 'Save Category' : 'Add Category'}
                         </button>
-                        <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">
+                        <button type="button" onClick={resetForm} className="rounded-xl border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">
                             Cancel
                         </button>
                     </div>
@@ -165,38 +188,29 @@ const CategoriesPage = () => {
                             <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Slug</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Display Order</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Status</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                         {loading ? (
-                            <tr>
-                                <td colSpan="4" className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
-                                    Loading categories...
-                                </td>
-                            </tr>
+                            <tr><td colSpan="5" className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">Loading categories...</td></tr>
                         ) : categories.length === 0 ? (
-                            <tr>
-                                <td colSpan="4" className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
-                                    No categories found.
-                                </td>
-                            </tr>
+                            <tr><td colSpan="5" className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">No categories found.</td></tr>
                         ) : (
                             categories.map((category) => {
                                 const categoryKey = String(category.name || '').toLowerCase();
                                 const paletteClass = categoryColors[categoryKey] || categoryColors.default;
                                 return (
                                     <tr key={category._id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                                        <td className="px-4 py-3">
-                                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${paletteClass}`}>
-                                                {category.name}
-                                            </span>
-                                        </td>
+                                        <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${paletteClass}`}>{category.name}</span></td>
                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{category.slug}</td>
                                         <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{category.displayOrder ?? 0}</td>
+                                        <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${category.isActive ? 'bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:ring-emerald-500/30' : 'bg-slate-500/15 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-500/20 dark:text-slate-200 dark:ring-slate-500/30'}`}>{category.isActive ? 'Active' : 'Inactive'}</span></td>
                                         <td className="px-4 py-3">
-                                            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${category.isActive ? 'bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:ring-emerald-500/30' : 'bg-slate-500/15 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-500/20 dark:text-slate-200 dark:ring-slate-500/30'}`}>
-                                                {category.isActive ? 'Active' : 'Inactive'}
-                                            </span>
+                                            <div className="flex gap-2">
+                                                <button type="button" onClick={() => handleEditCategory(category)} className="rounded-lg border border-brand-500 px-3 py-1.5 text-xs font-medium text-brand-600 dark:text-brand-300">Edit</button>
+                                                <button type="button" onClick={() => handleDeleteCategory(category._id)} className="rounded-lg border border-red-500 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-300">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );

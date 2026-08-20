@@ -95,6 +95,27 @@ const OrdersPage = () => {
         }
     };
 
+    const handleDeleteOrder = async (orderId) => {
+        const confirmed = window.confirm('આ order delete કરવું છે?');
+        if (!confirmed) return;
+
+        try {
+            const token = localStorage.getItem('adminToken');
+            const res = await axios.delete(`${API_URL}/api/admin/orders/${orderId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (res.data.success) {
+                setMessage('Order deleted successfully');
+                setSelectedOrder(null);
+                await fetchOrders();
+            }
+        } catch (error) {
+            console.error('Delete order failed:', error);
+            setMessage(error.response?.data?.message || 'Failed to delete order');
+        }
+    };
+
     const updateItemQuantity = (index, value) => {
         setSelectedOrder((prev) => {
             if (!prev) return prev;
@@ -172,6 +193,12 @@ const OrdersPage = () => {
                                         className={`rounded-lg px-3 py-2 text-sm ${canEdit(selectedOrder) ? 'bg-cyan-500 text-white hover:bg-cyan-400' : 'cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-600 dark:text-slate-300'}`}
                                     >
                                         {editing ? 'Cancel Edit' : 'Edit Order'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteOrder(selectedOrder._id)}
+                                        className="rounded-lg border border-red-500 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-300"
+                                    >
+                                        Delete
                                     </button>
                                 </div>
                             </div>
